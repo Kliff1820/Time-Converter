@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Flexible Time Zone Converter Clock</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<style>
+    * { box-sizing: border-box; }
+    html, body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+      margin: 0;
+      padding: 0;
+      color: #333;
+      text-align: center;
+      height: 100%;
+      overflow-y: auto;
+    }
+    h1 {
+      font-size: 2.2vw;
+      margin: 1.5vw 0 1vw;
+      color: #1c3c68;
+      font-weight: 600;
+    }
+    .zone-buttons {
+      margin-bottom: 1rem;
+    }
+    .zone-btn {
+      font-size: 1rem;
+      margin: 0.3rem;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 5px;
+      background: #1c3c68;
+      color: white;
+      cursor: pointer;
+    }
+    .zone-btn.selected {
+      background-color: #3498db;
+      font-weight: bold;
+      box-shadow: 0 0 0 2px #2980b9;
+    }
+    .hour-grid {
+      display: inline-grid;
+      grid-template-columns: repeat(6, auto);
+      gap: 8px;
+      margin: 0.8rem auto;
+    }
+    .hour-grid button {
+      font-size: 0.9rem;
+      padding: 0.5rem 0.7rem;
+      border: none;
+      background: #1c3c68;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .hour-grid button.selected {
+      background-color: #3498db;
+      color: #fff;
+      font-weight: bold;
+      box-shadow: 0 0 0 2px #2980b9;
+    }
+    .controls button.reset {
+      margin-top: 0.8rem;
+      background: #e74c3c;
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .clock-container {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 1.2vw;
+      padding: 1vw 2vw;
+    }
+    .clock {
+      background: #ffffffee;
+      padding: 1.5vw;
+      border-radius: 1.5vw;
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+      width: 18vw;
+      min-width: 200px;
+      flex: 0 0 auto;
+      transition: transform 0.3s;
+    }
+    .clock:hover {
+      transform: translateY(-0.5vw);
+    }
+    .zone {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 1vw;
+    }
+    .analog-clock {
+      width: 130px;
+      height: 130px;
+      border: 4px solid #1c3c68;
+      border-radius: 50%;
+      margin: 0 auto 15px;
+      position: relative;
+      background: #fff;
+    }
+    .analog-clock .number {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 20px;
+      font-size: 0.8rem;
+      color: #1c3c68;
+      transform: translate(-50%, -50%);
+    }
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: rotate(0deg);
+    }
+    .hour { width: 4px; height: 35px; background: #1c3c68; }
+    .minute { width: 3px; height: 50px; background: #274e8e; }
+    .second { width: 2px; height: 58px; background: #e74c3c; }
+    .time {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1c3c68;
+      letter-spacing: 1px;
+      word-break: break-word;
+    }
+    .date {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+  
+    input[type="date"] {
+      padding: 0.4rem 0.8rem;
+      font-size: 1rem;
+      border: 2px solid #1c3c68;
+      border-radius: 6px;
+      background-color: #ffffff;
+      color: #1c3c68;
+      font-family: 'Poppins', sans-serif;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="date"]:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    }
+    </style>
+</head>
+<body>
+<h1>🌐 Flexible Time Zone Converter</h1>
+<div class="controls">
+<div class="zone-buttons">
+<label for="date-picker">Select Date:</label><br/>
+<input id="date-picker" type="date"/><br/><br/>
+<label>Select Time Zone:</label><br/>
+<div id="zone-selector">
+<button class="zone-btn" data-zone="pht">🇵🇭 Manila (PHT)</button>
+<button class="zone-btn" data-zone="est">🇺🇸 Eastern Time (ET)</button>
+<button class="zone-btn" data-zone="cst">🇺🇸 Central Time (CT)</button>
+<button class="zone-btn" data-zone="mst">🇺🇸 Mountain Time (MT)</button>
+<button class="zone-btn" data-zone="pst">🇺🇸 Pacific Time (PT)</button>
+</div>
+</div>
+<div class="hour-grid" id="hour-grid"></div>
+<br/>
+<button class="reset" onclick="resetTime()">Reset</button>
+</div>
+<div class="clock-container">
+<div class="clock"><div class="zone">🇵🇭 Manila (PHT)</div><div class="analog-clock" id="clock-pht"></div><div class="date" id="date-pht"></div><div class="time" id="time-pht"></div></div>
+<div class="clock"><div class="zone">🇺🇸 Eastern Time (ET)</div><div class="analog-clock" id="clock-est"></div><div class="date" id="date-est"></div><div class="time" id="time-est"></div></div>
+<div class="clock"><div class="zone">🇺🇸 Central Time (CT)</div><div class="analog-clock" id="clock-cst"></div><div class="date" id="date-cst"></div><div class="time" id="time-cst"></div></div>
+<div class="clock"><div class="zone">🇺🇸 Mountain Time (MT)</div><div class="analog-clock" id="clock-mst"></div><div class="date" id="date-mst"></div><div class="time" id="time-mst"></div></div>
+<div class="clock"><div class="zone">🇺🇸 Pacific Time (PT)</div><div class="analog-clock" id="clock-pst"></div><div class="date" id="date-pst"></div><div class="time" id="time-pst"></div></div>
+</div>
+<script>
+    const zones = [
+      { id: 'pht', tz: 'Asia/Manila' },
+      { id: 'est', tz: 'America/New_York' },
+      { id: 'cst', tz: 'America/Chicago' },
+      { id: 'mst', tz: 'America/Denver' },
+      { id: 'pst', tz: 'America/Los_Angeles' }
+    ];
+
+    let manualBaseTime = null;
+    let sourceZone = 'pht';
+
+    const grid = document.getElementById('hour-grid');
+    for (let i = 1; i <= 12; i++) {
+      ['AM', 'PM'].forEach(period => {
+        const btn = document.createElement('button');
+        btn.textContent = `${i} ${period}`;
+        btn.onclick = () => selectHour(i, period);
+        grid.appendChild(btn);
+      });
+    }
+
+    function selectHour(hour, period) {
+      document.querySelectorAll('.hour-grid button').forEach(btn => btn.classList.remove('selected'));
+      const selectedBtn = Array.from(document.querySelectorAll('.hour-grid button')).find(btn => btn.textContent === `${hour} ${period}`);
+      if (selectedBtn) selectedBtn.classList.add('selected');
+
+      let hour24 = hour % 12;
+      if (period === 'PM') hour24 += 12;
+      if (period === 'AM' && hour24 === 12) hour24 = 0;
+      manualBaseTime = new Date();
+      manualBaseTime.setHours(hour24, 0, 0, 0);
+
+      updateClockVisibility();
+    }
+
+    function resetTime() {
+      manualBaseTime = null;
+      document.querySelectorAll('.hour-grid button').forEach(btn => btn.classList.remove('selected'));
+      document.getElementById('date-picker').value = '';
+      updateClockVisibility();
+    }
+
+    function getTimeZone(zoneId) {
+      return zones.find(z => z.id === zoneId).tz;
+    }
+
+    function createClockElements(zoneId) {
+      const clock = document.getElementById(`clock-${zoneId}`);
+      for (let n = 1; n <= 12; n++) {
+        const angle = (n / 12) * 2 * Math.PI;
+        const x = 65 + 50 * Math.sin(angle);
+        const y = 65 - 50 * Math.cos(angle);
+        const number = document.createElement('div');
+        number.className = 'number';
+        number.style.left = `${x}px`;
+        number.style.top = `${y}px`;
+        number.textContent = n;
+        clock.appendChild(number);
+      }
+      ['hour', 'minute', 'second'].forEach(type => {
+        const hand = document.createElement('div');
+        hand.className = `hand ${type}`;
+        hand.id = `${type}-hand-${zoneId}`;
+        clock.appendChild(hand);
+      });
+    }
+
+    function updateClockVisibility() {
+      zones.forEach(zone => {
+        const clockDiv = document.getElementById(`time-${zone.id}`).parentElement;
+        clockDiv.style.display = (zone.id === sourceZone && manualBaseTime) ? 'none' : 'block';
+      });
+    }
+
+    function updateClocks() {
+      const { DateTime } = luxon;
+      const selectedDate = document.getElementById("date-picker").value;
+      let baseDateTime;
+
+      if (manualBaseTime) {
+        const hour = manualBaseTime.getHours();
+        const datePart = selectedDate || DateTime.now().toISODate();
+        baseDateTime = DateTime.fromISO(datePart).set({ hour, minute: 0, second: 0, millisecond: 0 }).setZone(getTimeZone(sourceZone), { keepLocalTime: true });
+      } else {
+        baseDateTime = DateTime.now().setZone(getTimeZone(sourceZone));
+      }
+
+      zones.forEach(zone => {
+        const dt = baseDateTime.setZone(zone.tz);
+        document.getElementById(`date-${zone.id}`).textContent = dt.toFormat("ccc, LLL dd yyyy");
+        document.getElementById(`time-${zone.id}`).textContent = dt.toFormat("hh:mm:ss a ZZZZ");
+
+        document.getElementById(`second-hand-${zone.id}`).style.transform = `rotate(${dt.second * 6}deg)`;
+        document.getElementById(`minute-hand-${zone.id}`).style.transform = `rotate(${dt.minute * 6 + dt.second * 0.1}deg)`;
+        document.getElementById(`hour-hand-${zone.id}`).style.transform = `rotate(${((dt.hour % 12) / 12) * 360 + dt.minute * 0.5}deg)`;
+      });
+    }
+
+    zones.forEach(zone => createClockElements(zone.id));
+    document.querySelector('.zone-btn[data-zone="pht"]').classList.add('selected');
+    updateClockVisibility();
+    updateClocks();
+    setInterval(updateClocks, 1000);
+
+    document.querySelectorAll('.zone-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        sourceZone = btn.dataset.zone;
+        updateClockVisibility();
+      });
+    });
+  </script>
+</body>
+</html>
