@@ -93,10 +93,8 @@
       min-width: 200px;
       flex: 0 0 auto;
       transition: transform 0.3s;
-      /* Changes cursor to show it is draggable */
       cursor: grab; 
     }
-    /* Style for when you are actively dragging a box */
     .clock.sortable-ghost {
       opacity: 0.4;
       background-color: #c2e9fb;
@@ -146,6 +144,20 @@
       letter-spacing: 1px;
       word-break: break-word;
     }
+    
+    /* New Style for the DST Badge */
+    .dst-badge {
+        background-color: #f39c12; /* Orange color */
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.6em;
+        vertical-align: middle;
+        margin-left: 5px;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
     .date {
       font-size: 0.9rem;
       color: #666;
@@ -207,13 +219,11 @@
 
 <script>
     // --- SortableJS Initialization ---
-    // This simple line enables dragging on the clock container
     new Sortable(document.getElementById('sortable-clocks'), {
-        animation: 150, // Makes the movement look smooth
-        ghostClass: 'sortable-ghost' // Style for the placeholder while dragging
+        animation: 150, 
+        ghostClass: 'sortable-ghost' 
     });
 
-    // --- Original Logic ---
     const zones = [
       { id: 'pht', tz: 'Asia/Manila' },
       { id: 'est', tz: 'America/New_York' },
@@ -286,7 +296,6 @@
     function updateClockVisibility() {
       zones.forEach(zone => {
         const clockDiv = document.getElementById(`time-${zone.id}`).parentElement;
-        // Check if the clockDiv exists before trying to style it
         if (clockDiv) {
             clockDiv.style.display = (zone.id === sourceZone && manualBaseTime) ? 'none' : 'block';
         }
@@ -309,8 +318,13 @@
       zones.forEach(zone => {
         const dt = baseDateTime.setZone(zone.tz);
         document.getElementById(`date-${zone.id}`).textContent = dt.toFormat("ccc, LLL dd yyyy");
-        document.getElementById(`time-${zone.id}`).textContent = dt.toFormat("hh:mm:ss a ZZZZ");
+        
+        // --- NEW LOGIC: Add DST badge if applicable ---
+        const timeString = dt.toFormat("hh:mm:ss a ZZZZ");
+        const dstBadge = dt.isInDST ? '<span class="dst-badge">DST</span>' : '';
+        document.getElementById(`time-${zone.id}`).innerHTML = timeString + dstBadge;
 
+        // Update Hands
         document.getElementById(`second-hand-${zone.id}`).style.transform = `rotate(${dt.second * 6}deg)`;
         document.getElementById(`minute-hand-${zone.id}`).style.transform = `rotate(${dt.minute * 6 + dt.second * 0.1}deg)`;
         document.getElementById(`hour-hand-${zone.id}`).style.transform = `rotate(${((dt.hour % 12) / 12) * 360 + dt.minute * 0.5}deg)`;
