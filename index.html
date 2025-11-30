@@ -4,8 +4,10 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Flexible Time Zone Converter Clock</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
 <style>
     * { box-sizing: border-box; }
     html, body {
@@ -74,14 +76,14 @@
       color: #fff;
     }
     .clock-container {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap; /* allows wrapping instead of scrolling */
-  overflow-x: hidden; /* prevents horizontal scroll */
-  gap: 1.2vw;
-  padding: 1vw 2vw;
-}
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap; 
+      overflow-x: hidden; 
+      gap: 1.2vw;
+      padding: 1vw 2vw;
+    }
     .clock {
       background: #ffffffee;
       padding: 1.5vw;
@@ -91,6 +93,13 @@
       min-width: 200px;
       flex: 0 0 auto;
       transition: transform 0.3s;
+      /* Changes cursor to show it is draggable */
+      cursor: grab; 
+    }
+    /* Style for when you are actively dragging a box */
+    .clock.sortable-ghost {
+      opacity: 0.4;
+      background-color: #c2e9fb;
     }
     .clock:hover {
       transform: translateY(-0.5vw);
@@ -143,7 +152,7 @@
       margin-top: -10px;
       margin-bottom: 10px;
     }
-  
+   
     input[type="date"] {
       padding: 0.4rem 0.8rem;
       font-size: 1rem;
@@ -177,7 +186,6 @@
 <button class="zone-btn" data-zone="cst">🇺🇸 Central Time (CT)</button>
 <button class="zone-btn" data-zone="mst">🇺🇸 Mountain Time (MT)</button>
 <button class="zone-btn" data-zone="pst">🇺🇸 Pacific Time (PT)</button>
-<!-- Added new zones -->
 <button class="zone-btn" data-zone="cet">🇫🇷 Paris (CET)</button>
 <button class="zone-btn" data-zone="utc">🌍 UTC</button>
 </div>
@@ -187,26 +195,33 @@
 <button class="reset" onclick="resetTime()">Reset</button>
 </div>
 
-<div class="clock-container">
+<div class="clock-container" id="sortable-clocks">
 <div class="clock"><div class="zone">🇵🇭 Manila (PHT)</div><div class="analog-clock" id="clock-pht"></div><div class="date" id="date-pht"></div><div class="time" id="time-pht"></div></div>
 <div class="clock"><div class="zone">🇺🇸 Eastern Time (ET)</div><div class="analog-clock" id="clock-est"></div><div class="date" id="date-est"></div><div class="time" id="time-est"></div></div>
 <div class="clock"><div class="zone">🇺🇸 Central Time (CT)</div><div class="analog-clock" id="clock-cst"></div><div class="date" id="date-cst"></div><div class="time" id="time-cst"></div></div>
 <div class="clock"><div class="zone">🇺🇸 Mountain Time (MT)</div><div class="analog-clock" id="clock-mst"></div><div class="date" id="date-mst"></div><div class="time" id="time-mst"></div></div>
 <div class="clock"><div class="zone">🇺🇸 Pacific Time (PT)</div><div class="analog-clock" id="clock-pst"></div><div class="date" id="date-pst"></div><div class="time" id="time-pst"></div></div>
-<!-- Added new clocks -->
 <div class="clock"><div class="zone">🇫🇷 Paris (CET)</div><div class="analog-clock" id="clock-cet"></div><div class="date" id="date-cet"></div><div class="time" id="time-cet"></div></div>
 <div class="clock"><div class="zone">🌍 UTC</div><div class="analog-clock" id="clock-utc"></div><div class="date" id="date-utc"></div><div class="time" id="time-utc"></div></div>
 </div>
 
 <script>
+    // --- SortableJS Initialization ---
+    // This simple line enables dragging on the clock container
+    new Sortable(document.getElementById('sortable-clocks'), {
+        animation: 150, // Makes the movement look smooth
+        ghostClass: 'sortable-ghost' // Style for the placeholder while dragging
+    });
+
+    // --- Original Logic ---
     const zones = [
       { id: 'pht', tz: 'Asia/Manila' },
       { id: 'est', tz: 'America/New_York' },
       { id: 'cst', tz: 'America/Chicago' },
       { id: 'mst', tz: 'America/Denver' },
       { id: 'pst', tz: 'America/Los_Angeles' },
-      { id: 'cet', tz: 'Europe/Paris' }, // added Paris
-      { id: 'utc', tz: 'UTC' }           // added UTC
+      { id: 'cet', tz: 'Europe/Paris' },
+      { id: 'utc', tz: 'UTC' }
     ];
 
     let manualBaseTime = null;
@@ -271,7 +286,10 @@
     function updateClockVisibility() {
       zones.forEach(zone => {
         const clockDiv = document.getElementById(`time-${zone.id}`).parentElement;
-        clockDiv.style.display = (zone.id === sourceZone && manualBaseTime) ? 'none' : 'block';
+        // Check if the clockDiv exists before trying to style it
+        if (clockDiv) {
+            clockDiv.style.display = (zone.id === sourceZone && manualBaseTime) ? 'none' : 'block';
+        }
       });
     }
 
